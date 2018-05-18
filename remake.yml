@@ -1,0 +1,220 @@
+packages:
+  - dplyr
+  - tidyr
+  - ggplot2
+  - gridExtra
+  - GGally
+  - taxonlookup
+  - phytools
+  - diversitree
+  - vegan
+  - ggtree
+  - viridis
+  - mvabund
+  - boral #NOTE---- boral uses JAGS so you need to first install from http://sourceforge.net/projects/mcmc-jags/files/JAGS/
+  - circlize
+  - RCPmod
+
+sources:
+  - code
+
+targets:
+   all:
+     depends:
+       - derived_data/complete_subset_list.RData  # data intermediate -- cleaned otu table and sample metadata
+       - output/otuSummary/otuSummary.csv
+       - output/otuSummary/sampleEffortCurves.pdf # Fig S4
+       - output/otuSummary/richness.pdf # Fig S1
+       - output/distances/fig_woodPhylo_woodTrait_fungDist.pdf    # Fig 6
+       - output/distances/summary_woodPhylo_woodTrait_fungDist.csv # Table S3
+       - output/roleOfTraits/unconstrained_envfit.pdf             # Fig S5
+       - output/roleOfTraits/constrained_bestmodelsummary.csv # Table S1
+       - output/roleOfTraits/mvabundAICs.csv # Table 1
+       - output/boral_diagnostics/summarizeGeweke_byParamType_Traits-and-LVs_allX.pdf # Fig S2
+       - output/boral_roleOfTraits/summary_Xcoefs_allX.csv # Table 2
+       - output/boral_roleOfTraits/signifXcoefs_byOTUId_allX.pdf # Fig S6
+       - output/boral_cooccur/cor_distributions_allX.pdf # Fig 2
+       - output/boral_cooccur/chordDiagrams_allX.pdf # Fig 2
+       - output/boral_cooccur/cor_distributions_selectX.pdf # Fig S7
+       - output/boral_cooccur/corFreq_phylo_allX.pdf # Fig 3
+       - output/boral_cooccur/corFreq_troph_allX.pdf # Fig 3
+       - output/boral_cooccur/chordDiagrams_allX.csv # Table S2
+       - output/rcp_diagnostics/numOfgroups_diagnostics.pdf # Fig S3
+       - output/rcp_results/species_confmat.pdf # Fig 5
+       - output/rcp_results/species_studydesign.pdf # Fig 5
+       - output/rcp_results/partialEffects_select4.pdf # Fig 4
+       - output/rcp_results/partialEffects_theRest1.pdf # Fig S9
+       - output/rcp_results/partialEffects_theRest2.pdf # Fig S9
+       - output/rcp_results/expectedAbund_perRCP.pdf # Fig S8
+
+# -------------------------------------------------------------------#
+# load_data.R and plottingTheme.R : Load data and plotting theme
+
+   comm.otu:
+    command: load_matotu()
+    
+   seqSamples: 
+    command: load_seqSamples(mat.otu = comm.otu)
+    
+   taxAndFunguild:
+    command: load_TaxAndFunguild(comm.otu)
+    
+   zanneTree: 
+    command: load_zanne_tree()
+    
+   traits.code:
+    command: mergeTraitData()
+    
+   complete_subset_list:
+    command: subset_and_make_list(seqSamples, traits.code, mat.otu = comm.otu)
+    
+   derived_data/complete_subset_list.RData:
+    command: save_complete_subset_list(complete_subset_list)
+  
+# -------------------------------------------------------------------#
+# summarize_OTUmat.R : Summarize the OTU matrix
+
+   output/otuSummary/otuSummary.csv:
+    command: calc_otu_summStats(comm.otu, taxAndFunguild)
+    
+   output/otuSummary/sampleEffortCurves.pdf:
+    command: plot_sampleEffortCurves(comm.otu)
+    
+   output/otuSummary/richness_fig.pdf:
+    command: plot_richness(comm.otu, seqSamples, taxAndFunguild, zanneTree)
+
+
+# -------------------------------------------------------------------#
+# distances.R : Compare wood phylogenetic distances, wood trait distances, and fungal community distances
+
+   pairDist:
+    command: calc_pairdist(zanneTree, comm.otu, traits.code, seqSamples)
+   
+   output/distances/fig_woodPhylo_woodTrait_fungDist.pdf:
+    command: plot_woodDistfungDist_bothContinuous(pairDist)
+   
+   output/distances/summary_woodPhylo_woodTrait_fungDist.csv:
+    command: write_woodDistfungDist_summary(pairDist)
+
+
+# -------------------------------------------------------------------#
+# roleOf_traits_on_fungi.R : Find out which wood traits are most important in shaping the fungal community
+
+   ## distance-based methods
+   
+   output/roleOfTraits/unconstrained_envfit.pdf:
+    command: plot_envfit_on_unconstrainedOrd(complete_subset_list, seqSamples)
+    
+   output/roleOfTraits/constrained_bestmodelsummary.csv:
+    command: summary_bestmodel_constrainedOrd(complete_subset_list)
+
+   ## mvabund methods
+   
+   mod.m.list:
+    command: fit_mvabund(complete_subset_list)
+    
+   output/roleOfTraits/mvabundAICs.csv:
+    command: write_mvabund_aicTable(mod.m.list)
+
+
+# -------------------------------------------------------------------#
+# boral_modfit.R : Run model-based constrained and unconstrained ordinations using the boral package
+
+# Load the intermediate data into this workflow
+# see linear_remake.R for details about how intermediate data was produced
+
+   TraitLVs_allXs.mcmc.obj:
+    command: readRDS("derived_data/boralFits/Traits-and-LVs_allXs_allruns_mcmcObjreal.RData")
+    
+   TraitLVs_allXs.Xcoefs.df:
+    command: readRDS("derived_data/boralFits/Traits-and-LVs_allXs_allruns_Xcoefsreal.RData")
+    
+   TraitLVs_allXs.cor.df:
+    command: readRDS("derived_data/boralFits/Traits-and-LVs_allXs_allruns_cordfreal.RData")
+    
+   TraitLVs_selectXs.cor.df:
+    command: readRDS("derived_data/boralFits/Traits-and-LVs_selectXs_allruns_cordfreal.RData")
+
+
+# -------------------------------------------------------------------#
+# boral_diagnostics.R : Report fit diagnostics
+    
+   geweke.TraitsLVs_allX:
+    command: create_geweke_df(fit.list = TraitLVs_allXs.mcmc.obj, complete_subset_list = complete_subset_list, taxAndFunguild = taxAndFunguild)
+    
+   output/boral_diagnostics/summarizeGeweke_byParamType_Traits-and-LVs_allX.pdf:
+    command: summarizeGeweke_byParamType(geweke.df.ann = geweke.TraitsLVs_allX, modelLVonly = FALSE, allXs = TRUE)
+
+
+# -------------------------------------------------------------------#
+# boral_roleOf_traits_on_fungi.R : Summarize the direction and magnitude that wood traits explain OTU abundances
+
+   output/boral_roleOfTraits/summary_Xcoefs_allX.csv:
+    command: write_summary_Xcoefs(fit.list = TraitLVs_allXs.Xcoefs.df, allXs = TRUE)
+    
+   output/boral_roleOfTraits/signifXcoefs_byOTUId_allX.pdf:
+    command: plot_summary_Xcoefs_byOTUId(fit.list = TraitLVs_allXs.Xcoefs.df, taxAndFunguild, allXs = TRUE)
+
+
+# -------------------------------------------------------------------#
+# boral_cooccur.R : Summarize the direction and magnitude that OTU environmental and LV predictors covary
+
+   output/boral_cooccur/cor_distributions_allX.pdf:
+    command: plot_cor_distributions(fit.list = TraitLVs_allXs.cor.df, taxAndFunguild, allXs = TRUE)
+    
+   output/boral_cooccur/chordDiagrams_allX.pdf:
+    command: make_chordDiagrams(fit.list = TraitLVs_allXs.cor.df, taxAndFunguild, allXs = TRUE)
+    
+   output/boral_cooccur/cor_distributions_selectX.pdf:
+    command: plot_cor_distributions(fit.list = TraitLVs_selectXs.cor.df, taxAndFunguild, allXs = FALSE)
+    
+   output/boral_cooccur/chordDiagrams_allX.csv:
+    command: make_chordDiagrams_table(fit.list = TraitLVs_allXs.cor.df, taxAndFunguild, complete_subset_list = complete_subset_list, allXs = TRUE)
+    
+   output/boral_cooccur/corFreq_phylo_allX.pdf: 
+    command: plot_corFreq_phylo(fit.list = TraitLVs_allXs.cor.df, taxAndFunguild, allXs = TRUE)
+    
+   output/boral_cooccur/corFreq_troph_allX.pdf:
+    command: plot_corFreq_troph(fit.list = TraitLVs_allXs.cor.df, taxAndFunguild, allXs = TRUE)
+    
+
+# -------------------------------------------------------------------#
+# rcp_modfit.R : Run mixtures-of-experts models to identify regions of common profiles (RCPs) among OTUs using wood trait measures as covariates
+
+# Load the intermediate data into this workflow
+# see linear_remake.R for details about how intermediate data was produced
+
+   rcp_output_results:
+    command: load_rcp_output_results(test = FALSE)
+    
+   fm_rcp:
+    command: load_fm_rcp(test = FALSE)
+    
+
+# -------------------------------------------------------------------#
+# rcp_diagnostics.R : Report fit diagnostics
+
+   output/rcp_diagnostics/numOfgroups_diagnostics.pdf:
+    command: plot_numOfgroups_diagnostics(rcp_output_results = rcp_output_results)
+
+
+# -------------------------------------------------------------------#
+# rcp_results.R 
+
+   output/rcp_results/species_confmat.pdf:
+    command: plot_confus(fm_rcp = fm_rcp, complete_subset_list = complete_subset_list, seqSamples = seqSamples, zanneTree = zanneTree)
+    
+   output/rcp_results/studydesign.pdf:
+    command: plot_studyDesign(seqSamples = seqSamples, zanneTree = zanneTree)
+    
+   output/rcp_results/partialEffects_select4.pdf:
+    command: plot_partialEffects_select4(complete_subset_list = complete_subset_list, fm_rcp = fm_rcp)
+    
+   output/rcp_results/partialEffects_theRest1.pdf:
+    command: plot_partialEffect_theRest1(complete_subset_list = complete_subset_list, fm_rcp = fm_rcp)
+    
+   output/rcp_results/partialEffects_theRest2.pdf:
+    command: plot_partialEffect_theRest2(complete_subset_list = complete_subset_list, fm_rcp = fm_rcp)
+    
+   output/rcp_results/expectedAbund_perRCP.pdf:
+    command: plot_mostabundTaxa_perRCP(fm_rcp = fm_rcp, taxAndFunguild = taxAndFunguild)
