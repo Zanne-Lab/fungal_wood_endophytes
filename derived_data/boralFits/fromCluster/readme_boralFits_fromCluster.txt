@@ -1,0 +1,3 @@
+# download "boralFits_fromCluster.zip" from ...
+# https://drive.google.com/open?id=1kPMfS3deaPUXtP6GIiAnZL4WT-ChuAtm
+# put the unzipped contents in this folder: derived_data/boralFits/fromCluster
