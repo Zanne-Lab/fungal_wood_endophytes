@@ -1,6 +1,8 @@
 Fungal endophyte communities rarely exhibit competitive exclusion patterns across a range of wood habitats
 ================
 
+Authors: Marissa R. Lee (marissaruthlee@gmail.com), Jeff R. Powell, Brad Oberle, William K. Cornwell, Mitchell Lyons, Jessica L. Rigg, and Amy E. Zanne
+
 To determine how endophytic fungal taxa respond to both abiotic and biotic environmental drivers, we characterized these communities using high-throughput amplicon sequencing and measured wood functional traits in stems sampled from 22 species of plants growing in woodlands near Richmond, NSW, Australia.
 
 This repository holds the data and code needed to reproduce our analyses, but users should be aware that two types of analyses, (i) latent variable co-occurrance models run with the R package boral and (ii) model-based classification run with the R package RCPmod are quite computationally-intensive (e.g. >24 hrs processing time). Model fitting for these analyses were conducted with the help of cluster computing. Scripts used to do so are included in the folder `forCluster`.  Intermediate R objects from those processes are included in the `derived_data` folder and are incorporated into the analysis workflows described below.
