@@ -156,48 +156,52 @@ enviro.cor.btwRuns <- function(fit.list, taxAndFunguild, allXs){
   # look at OTUs that classified as signif positive and negative
   summ.enviro %>%
     filter(grepl("positive", signifLevels) & grepl("negative", signifLevels)) -> tmp
+  numDiff <-dim(tmp)[1]
+  percDiff <- (numDiff / numOTUpairs) *100
   
-  # calculate the difference between runs
-  cor.df.ann %>%
-    select(source, otupair, enviro_cor) %>%
-    filter(otupair %in% tmp$otupair) %>%
-    group_by(otupair) %>%
-    summarize(min.cor = min(enviro_cor),
-              max.cor = max(enviro_cor),
-              diff = abs(max.cor - min.cor)) %>%
-    select(otupair, diff) -> diff.indx
+  # # calculate the difference between runs
+  # cor.df.ann %>%
+  #   select(source, otupair, enviro_cor) %>%
+  #   filter(otupair %in% tmp$otupair) %>%
+  #   group_by(otupair) %>%
+  #   summarize(min.cor = min(enviro_cor),
+  #             max.cor = max(enviro_cor),
+  #             diff = abs(max.cor - min.cor)) %>%
+  #   select(otupair, diff) -> diff.indx
+  # 
+  # # subset and annotate the data
+  # cor.df.ann %>%
+  #   select(source, otupair, enviro_cor, enviro_signif) %>%
+  #   filter(otupair %in% tmp$otupair) %>%
+  #   left_join(diff.indx) -> plot.df
+  # 
+  # # plot the distribution of differences
+  # PAIR<-unique(plot.df$otupair)
+  # title <- paste(length(PAIR), " of ", numOTUpairs, 
+  #                " (", round((length(PAIR)/numOTUpairs) * 100, digits = 0), "%) ",
+  #                "OTU pairs flip signif", sep ="")
+  # hist.envir <- ggplot(diff.indx, aes(x=diff)) +
+  #   geom_histogram() + xlab("Abs. diff. in correlation values between runs") +
+  #   ggtitle(title) +
+  #   geom_vline(aes(xintercept = 0.5), color = 2)
+  # #hist.envir
+  # 
+  # # plot the correlation values for OTU pairs where the difference between runs is greater that 0.5
+  # plot.df -> plot.df.sub
+  # badones.envir <- ggplot(plot.df.sub, aes(y = reorder(otupair, diff), x = enviro_cor)) +
+  #   geom_point(aes(color = enviro_signif)) +
+  #   geom_line() +
+  #   geom_vline(aes(xintercept = 0), linetype = 2) +
+  #   guides(color = F) +
+  #   xlab("Correlation") + ylab("OTU pair")
+  # #badones.envir
   
-  # subset and annotate the data
-  cor.df.ann %>%
-    select(source, otupair, enviro_cor, enviro_signif) %>%
-    filter(otupair %in% tmp$otupair) %>%
-    left_join(diff.indx) -> plot.df
+  #fileName <- paste0("output/boral_cooccur/runVariation_enviro_", modelID2, ".pdf")
+  #pdf(fileName, width = 12, height = 8)
+  #grid.arrange(hist.envir, badones.envir, ncol=2)
+  #dev.off()
   
-  # plot the distribution of differences
-  PAIR<-unique(plot.df$otupair)
-  title <- paste(length(PAIR), " of ", numOTUpairs, 
-                 " (", round((length(PAIR)/numOTUpairs) * 100, digits = 0), "%) ",
-                 "OTU pairs flip signif", sep ="")
-  hist.envir <- ggplot(diff.indx, aes(x=diff)) +
-    geom_histogram() + xlab("Abs. diff. in correlation values between runs") +
-    ggtitle(title) +
-    geom_vline(aes(xintercept = 0.5), color = 2)
-  #hist.envir
-  
-  # plot the correlation values for OTU pairs where the difference between runs is greater that 0.5
-  plot.df -> plot.df.sub
-  badones.envir <- ggplot(plot.df.sub, aes(y = reorder(otupair, diff), x = enviro_cor)) +
-    geom_point(aes(color = enviro_signif)) +
-    geom_line() +
-    geom_vline(aes(xintercept = 0), linetype = 2) +
-    guides(color = F) +
-    xlab("Correlation") + ylab("OTU pair")
-  #badones.envir
-  
-  fileName <- paste0("output/boral_cooccur/runVariation_enviro_", modelID2, ".pdf")
-  pdf(fileName, width = 12, height = 8)
-  grid.arrange(hist.envir, badones.envir, ncol=2)
-  dev.off()
+  return(percDiff) # percent of OTUpairs that flip significant signs (e.g. some runs they are positive, others they are negative)
   
 }
 
@@ -231,55 +235,59 @@ residual.cor.btwRuns <- function(fit.list, taxAndFunguild, allXs){
   # look at OTUs that classified as signif positive and negative
   summ.residual %>%
     filter(grepl("positive", signifLevels) & grepl("negative", signifLevels)) -> tmp
+  numDiff <-dim(tmp)[1]
+  percDiff <- (numDiff / numOTUpairs) *100
+  percDiff
   
-  # calculate the difference between runs
-  cor.df.ann %>%
-    select(source, otupair, residual_cor) %>%
-    filter(otupair %in% tmp$otupair) %>%
-    group_by(otupair) %>%
-    summarize(min.cor = min(residual_cor),
-              max.cor = max(residual_cor),
-              diff = abs(max.cor - min.cor)) %>%
-    select(otupair, diff) -> diff.indx
+  # # calculate the difference between runs
+  # cor.df.ann %>%
+  #   select(source, otupair, residual_cor) %>%
+  #   filter(otupair %in% tmp$otupair) %>%
+  #   group_by(otupair) %>%
+  #   summarize(min.cor = min(residual_cor),
+  #             max.cor = max(residual_cor),
+  #             diff = abs(max.cor - min.cor)) %>%
+  #   select(otupair, diff) -> diff.indx
+  # 
+  # # subset and annotate the data
+  # cor.df.ann %>%
+  #   select(source, otupair, residual_cor, residual_signif) %>%
+  #   filter(otupair %in% tmp$otupair) %>%
+  #   left_join(diff.indx) -> plot.df
+  # 
+  # # plot the distribution of differences
+  # PAIR<-unique(plot.df$otupair)
+  # title <- paste(length(PAIR), " of ", numOTUpairs, 
+  #                " (", round((length(PAIR)/numOTUpairs) * 100, digits = 0), "%) ",
+  #                "OTU pairs flip signif", sep ="")
+  # hist.residual <- ggplot(diff.indx, aes(x=diff)) +
+  #   geom_histogram() + xlab("Abs. diff. in correlation values between runs") +
+  #   ggtitle(title) +
+  #   geom_vline(aes(xintercept = 0.15), color = 2)
+  # #hist.residual
+  # 
+  # # plot the correlation values for OTU pairs where the difference between runs is greater that 0.5
+  # plot.df -> plot.df.sub
+  # badones.residual <- ggplot(plot.df.sub, aes(y = reorder(otupair, diff), x = residual_cor)) +
+  #   geom_point(aes(color = residual_signif)) +
+  #   geom_line() +
+  #   geom_vline(aes(xintercept = 0), linetype = 2) +
+  #   guides(color = F) +
+  #   xlab("Correlation") + ylab("OTU pair")
+  # #badones.residual
+  # 
+  # fileName <- paste0("output/boral_cooccur/runVariation_resdiual_", modelID2, ".pdf")
+  # pdf(fileName, width = 12, height = 8)
+  # grid.arrange(hist.residual, badones.residual, ncol=2)
+  # dev.off()
   
-  # subset and annotate the data
-  cor.df.ann %>%
-    select(source, otupair, residual_cor, residual_signif) %>%
-    filter(otupair %in% tmp$otupair) %>%
-    left_join(diff.indx) -> plot.df
-  
-  # plot the distribution of differences
-  PAIR<-unique(plot.df$otupair)
-  title <- paste(length(PAIR), " of ", numOTUpairs, 
-                 " (", round((length(PAIR)/numOTUpairs) * 100, digits = 0), "%) ",
-                 "OTU pairs flip signif", sep ="")
-  hist.residual <- ggplot(diff.indx, aes(x=diff)) +
-    geom_histogram() + xlab("Abs. diff. in correlation values between runs") +
-    ggtitle(title) +
-    geom_vline(aes(xintercept = 0.15), color = 2)
-  #hist.residual
-  
-  # plot the correlation values for OTU pairs where the difference between runs is greater that 0.5
-  plot.df -> plot.df.sub
-  badones.residual <- ggplot(plot.df.sub, aes(y = reorder(otupair, diff), x = residual_cor)) +
-    geom_point(aes(color = residual_signif)) +
-    geom_line() +
-    geom_vline(aes(xintercept = 0), linetype = 2) +
-    guides(color = F) +
-    xlab("Correlation") + ylab("OTU pair")
-  #badones.residual
-  
-  fileName <- paste0("output/boral_cooccur/runVariation_resdiual_", modelID2, ".pdf")
-  pdf(fileName, width = 12, height = 8)
-  grid.arrange(hist.residual, badones.residual, ncol=2)
-  dev.off()
+  return(percDiff) # percent of OTUpairs that flip significant signs (e.g. some runs they are positive, others they are negative)
   
 }
 
 
 #---------------------------------------------------------#
 # plot distribution of correlation values
-
 plot_cor_distributions_allruns <- function(fit.list, taxAndFunguild, allXs){
   
   if(allXs == TRUE){
@@ -737,7 +745,7 @@ make_chordDiagrams <- function(fit.list, taxAndFunguild, allXs){
   
 }
 
-investigate_enviro_chordDiagram <- function(fit.list, taxAndFunguild, allXs = TRUE){
+investigate_enviro_chordDiagram <- function(fit.list, fit.list2, taxAndFunguild, allXs = TRUE){
   
   cor.list <- lapply(fit.list, function(x) x$cor.df)
   cor.df <- list_to_df(cor.list)
@@ -762,7 +770,6 @@ investigate_enviro_chordDiagram <- function(fit.list, taxAndFunguild, allXs = TR
                                      negative_no_positive = "no_negative_positive", positive_no_negative = "no_negative_positive")
   summ.enviro %>%
     filter(signifLevels %in% c("negative","positive")) -> stable.otupairs
-  
   # make the dataframe
   cor.df.ann %>%
     filter(source == "run1") %>%
@@ -774,7 +781,8 @@ investigate_enviro_chordDiagram <- function(fit.list, taxAndFunguild, allXs = TR
   select.env <- env.frame[c(1:3, lastrow - 2, lastrow - 1, lastrow),]
   
   # merge with X coefs associated with each
-  Xcoefs.list <- lapply(fit.list, function(x) x$Xcoefs.df)
+  Xcoefs.list <- lapply(fit.list2, function(x) x$Xcoefs.df)
+  
   Xcoefs.summary.list <- lapply(Xcoefs.list, function(x){
     result<- summary_OTUID_nonsignif_Xcoefs(Xcoefs.df = x, taxAndFunguild = taxAndFunguild)
     result.df<-data.frame(result)
@@ -800,18 +808,18 @@ investigate_enviro_chordDiagram <- function(fit.list, taxAndFunguild, allXs = TR
   }
   names(xcoef.sub.list) <- select.env$otupair
   
-  return(xcoef.sub.list)
-  
-  # negExample <- xcoef.sub.list[[6]]
-  # taxAndFunguild %>%
-  #   filter(OTUId %in% c(colnames(negExample)[2:3])) %>%
-  #   select(OTUId, OTUId_ann) -> names.indx
-  # colnames(negExample)[2:3] <- c("Coprinellus_sp", "Cryptodiscus_sp3")
-  # 
-  # modelID2 <- "allX"
-  # fileName <- paste0("output/boral_cooccur/chordDiagrams_enviro_negExamp", modelID2, ".csv")
-  # write.csv(negExample, file = fileName)
-  
+  # negative example
+  length(xcoef.sub.list)
+  negExample <- xcoef.sub.list[[6]]
+  taxAndFunguild %>%
+    filter(OTUId %in% c(colnames(negExample)[2:3])) %>%
+    select(OTUId, OTUId_ann) -> names.indx
+  colnames(negExample)[2:3] <- names.indx$OTUId_ann
+
+  modelID2 <- "allX"
+  fileName <- paste0("output/boral_cooccur/chordDiagrams_enviro_negExamp", modelID2, ".csv")
+  write.csv(negExample, file = fileName)
+
   # taxAndFunguild %>%
   #   filter(OTUId %in% c(colnames(xcoef.sub.list[[3]][2:3]))) %>%
   #   select(OTUId, OTUId_ann)
@@ -828,7 +836,7 @@ compareAbund <- function(otu1, otu2, taxAndFunguild, otu.tab, covariates, seqSam
   otu2.name <- taxAndFunguild[taxAndFunguild$OTUId == otu2, "OTUId_ann"]
   otu.tab.1 <- otu.tab[,colnames(otu.tab) == otu1]
   otu.tab.2 <- otu.tab[,colnames(otu.tab) == otu2]
-  sub.otu.tab <- data.frame(seq_sampName = row.names(sub.otu.tab), otu1 = otu.tab.1, otu2 = otu.tab.2)
+  sub.otu.tab <- data.frame(seq_sampName = row.names(otu.tab), otu1 = otu.tab.1, otu2 = otu.tab.2)
   
   # add binomial data and calc mean OTUabund by code
   sub.otu.tab %>%
@@ -851,12 +859,12 @@ compareAbund <- function(otu1, otu2, taxAndFunguild, otu.tab, covariates, seqSam
     theme_classic() + scale_x_discrete(position = "top") +
     ylab("Wood species") + xlab("") + guides(fill = FALSE) +
     ggtitle(paste0(otu1.name, " and ", otu2.name, ", residual cor =", round(corval, digits = 2)))
-  
+
   return(p)
   
 }
 
-investigate_resid_chordDiagram <- function(fit.list, taxAndFunguild, allXs, complete_subset_list, seqSamples, zanneTree){
+investigate_resid_chordDiagram <- function(fit.list, fit.list2, taxAndFunguild, allXs, complete_subset_list, seqSamples, zanneTree){
   
   # order the Binomial names by the phylo tree
   ggt <- ggtree(zanneTree) + geom_tiplab(size=4)
@@ -919,14 +927,14 @@ investigate_resid_chordDiagram <- function(fit.list, taxAndFunguild, allXs, comp
 
   return(p.list)
   
+  #p.list
   
-  
-  taxAndFunguild %>%
-    filter(OTUId == select.res$otu2[1])
+  # taxAndFunguild %>%
+  #   filter(OTUId == select.res$otu2[1])
   
 }
 
-make_chordDiagrams_table <- function(fit.list = TraitsLVs_allXs, taxAndFunguild, complete_subset_list, allXs = TRUE){
+make_chordDiagrams_table <- function(fit.list, taxAndFunguild, complete_subset_list, allXs = TRUE){
   
   if(allXs == TRUE){
     modelID2 <- "allX"

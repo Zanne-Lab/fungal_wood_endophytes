@@ -135,6 +135,8 @@ summary_OTUID_nonsignif_Xcoefs <- function(Xcoefs.df, taxAndFunguild){
   
 }
 
+fit.list <- TraitLVs_allXs.Xcoefs.df
+allXs <- TRUE
 plot_summary_Xcoefs_byOTUId <- function(fit.list, taxAndFunguild, allXs){
   
   if(allXs == TRUE){
@@ -154,6 +156,7 @@ plot_summary_Xcoefs_byOTUId <- function(fit.list, taxAndFunguild, allXs){
     return(result.df)
     })
   Xcoefs.summary.df <- list_to_df(Xcoefs.summary.list)
+  
   # create summary plot
   Xcoefs.summary.df %>%
     gather(key = "term", value = "estimate", -c(OTUId_ann, Phylum, Genus, Guild, source), na.rm = T) -> Xcoefs.summary.df.l
@@ -164,6 +167,7 @@ plot_summary_Xcoefs_byOTUId <- function(fit.list, taxAndFunguild, allXs){
     group_by(OTUId_ann, term) %>%
     summarize(numSign = length(unique(estimate_sign))) %>%
     filter(numSign != 1) -> flip.signif.indx
+  
   Xcoefs.summary.df.l %>%
     left_join(flip.signif.indx) %>%
     filter(is.na(numSign)) -> Xcoefs.summary.df.l.noflips
@@ -174,7 +178,7 @@ plot_summary_Xcoefs_byOTUId <- function(fit.list, taxAndFunguild, allXs){
     summarize(numRuns = length(unique(source))) -> all.runs.indx
   Xcoefs.summary.df.l.noflips %>%
     left_join(all.runs.indx) %>%
-    filter(numRuns == 4) -> Xcoefs.summary.df.l.noflips.allruns
+    filter(numRuns == 12) -> Xcoefs.summary.df.l.noflips.allruns
   
   # order the terms
   df <- Xcoefs.summary.df.l.noflips.allruns
