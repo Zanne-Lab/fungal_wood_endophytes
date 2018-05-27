@@ -22,7 +22,7 @@ runType <- "real"
 
 
 # LV-only model -----------------------------------------------------
-NUMRUNS <- 3
+NUMRUNS <- 12
 SEED <- .Random.seed[1:NUMRUNS] #set seed for different runs
 for(i in 1:NUMRUNS){
     curr.fit.stats <- fit_boral_lvOnly(complete_subset_list, seed = SEED[i], runType = runType)
@@ -31,7 +31,7 @@ for(i in 1:NUMRUNS){
 }
 
 # Traits-and-LVs model (all X vars) -----------------------------------------------------
-NUMRUNS <- 3
+NUMRUNS <- 12
 SEED <- .Random.seed[1:NUMRUNS] #set seed for different runs
 for(i in 1:NUMRUNS){
     curr.fit.stats <- fit_boral_allX(complete_subset_list, seed = SEED[i], runType = runType)
@@ -40,7 +40,7 @@ for(i in 1:NUMRUNS){
 }
 
 # Traits-and-LVs model (select X vars) -----------------------------------------------------
-NUMRUNS <- 3
+NUMRUNS <- 12
 SEED <- .Random.seed[1:NUMRUNS] #set seed for different runs
 for(i in 1:NUMRUNS){
     curr.fit.stats <- fit_boral_selectX(complete_subset_list, seed = SEED[i], runType = runType)

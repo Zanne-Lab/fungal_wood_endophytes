@@ -30,7 +30,6 @@ targets:
        - output/roleOfTraits/unconstrained_envfit.pdf             # Fig S5
        - output/roleOfTraits/constrained_bestmodelsummary.csv # Table S1
        - output/roleOfTraits/mvabundAICs.csv # Table 1
-       - output/boral_diagnostics/summarizeGeweke_byParamType_Traits-and-LVs_allX.pdf # Fig S2
        - output/boral_roleOfTraits/summary_Xcoefs_allX.csv # Table 2
        - output/boral_roleOfTraits/signifXcoefs_byOTUId_allX.pdf # Fig S6
        - output/boral_cooccur/cor_distributions_allX.pdf # Fig 2
@@ -123,9 +122,6 @@ targets:
 # Load the intermediate data into this workflow
 # see linear_remake.R for details about how intermediate data was produced
 
-   TraitLVs_allXs.mcmc.obj:
-    command: readRDS("derived_data/boralFits/Traits-and-LVs_allXs_allruns_mcmcObjreal.RData")
-    
    TraitLVs_allXs.Xcoefs.df:
     command: readRDS("derived_data/boralFits/Traits-and-LVs_allXs_allruns_Xcoefsreal.RData")
     
@@ -134,16 +130,6 @@ targets:
     
    TraitLVs_selectXs.cor.df:
     command: readRDS("derived_data/boralFits/Traits-and-LVs_selectXs_allruns_cordfreal.RData")
-
-
-# -------------------------------------------------------------------#
-# boral_diagnostics.R : Report fit diagnostics
-    
-   geweke.TraitsLVs_allX:
-    command: create_geweke_df(fit.list = TraitLVs_allXs.mcmc.obj, complete_subset_list = complete_subset_list, taxAndFunguild = taxAndFunguild)
-    
-   output/boral_diagnostics/summarizeGeweke_byParamType_Traits-and-LVs_allX.pdf:
-    command: summarizeGeweke_byParamType(geweke.df.ann = geweke.TraitsLVs_allX, modelLVonly = FALSE, allXs = TRUE)
 
 
 # -------------------------------------------------------------------#

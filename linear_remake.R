@@ -37,6 +37,7 @@ source("code/rcp_results.R")
 comm.otu <- load_matotu()
 seqSamples <- load_seqSamples(mat.otu = comm.otu)
 taxAndFunguild <- load_TaxAndFunguild(comm.otu)
+#saveRDS(taxAndFunguild, file = "derived_data/taxAndFunguild.RData") # derived_data/taxAndFunguild.RData
 zanneTree <- load_zanne_tree()
 traits.code <- mergeTraitData()  
 complete_subset_list <- subset_and_make_list(seqSamples, traits.code, mat.otu = comm.otu)
@@ -86,17 +87,9 @@ write_mvabund_aicTable(mod.m.list) # output/roleOfTraits/mvabundAICs.csv = Table
 # TraitsLVs_selectXs <- load_boralIntermediates_lvenv(test = test.select, allXs = FALSE)
 
 # to load minimal output...
-TraitLVs_allXs.mcmc.obj <- readRDS("derived_data/boralFits/Traits-and-LVs_allXs_allruns_mcmcObjreal.RData")
 TraitLVs_allXs.Xcoefs.df <- readRDS("derived_data/boralFits/Traits-and-LVs_allXs_allruns_Xcoefsreal.RData")
 TraitLVs_allXs.cor.df <- readRDS("derived_data/boralFits/Traits-and-LVs_allXs_allruns_cordfreal.RData")
 TraitLVs_selectXs.cor.df <- readRDS("derived_data/boralFits/Traits-and-LVs_selectXs_allruns_cordfreal.RData")
-
-
-# -------------------------------------------------------------------#
-# boral_diagnostics.R : Report fit diagnostics
-# geweke convergence
-geweke.TraitsLVs_allX <- create_geweke_df(fit.list = TraitLVs_allXs.mcmc.obj, complete_subset_list, taxAndFunguild)
-summarizeGeweke_byParamType(geweke.df.ann = geweke.TraitsLVs_allX, modelLVonly = FALSE, allXs = TRUE) # output/boral_diagnostics/summarizeGeweke_byParamType_Traits-and-LVs.pdf = Fig S2
 
 # -------------------------------------------------------------------#
 # boral_roleOf_traits_on_fungi.R : Summarize the direction and magnitude that wood traits explain OTU abundances
