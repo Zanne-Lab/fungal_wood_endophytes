@@ -809,17 +809,16 @@ investigate_enviro_chordDiagram <- function(fit.list, fit.list2, taxAndFunguild,
   names(xcoef.sub.list) <- select.env$otupair
   
   # negative example
-  length(xcoef.sub.list)
-  negExample <- xcoef.sub.list[[6]]
+  negExample <- xcoef.sub.list[[3]]
   taxAndFunguild %>%
     filter(OTUId %in% c(colnames(negExample)[2:3])) %>%
     select(OTUId, OTUId_ann) -> names.indx
   colnames(negExample)[2:3] <- names.indx$OTUId_ann
-
+  
   modelID2 <- "allX"
   fileName <- paste0("output/boral_cooccur/chordDiagrams_enviro_negExamp", modelID2, ".csv")
   write.csv(negExample, file = fileName)
-
+  
   # taxAndFunguild %>%
   #   filter(OTUId %in% c(colnames(xcoef.sub.list[[3]][2:3]))) %>%
   #   select(OTUId, OTUId_ann)
@@ -864,6 +863,9 @@ compareAbund <- function(otu1, otu2, taxAndFunguild, otu.tab, covariates, seqSam
   
 }
 
+fit.list <- TraitLVs_allXs.cor.df
+fit.list2 <- TraitLVs_allXs.Xcoefs.df
+allXs <- TRUE
 investigate_resid_chordDiagram <- function(fit.list, fit.list2, taxAndFunguild, allXs, complete_subset_list, seqSamples, zanneTree){
   
   # order the Binomial names by the phylo tree
@@ -927,7 +929,8 @@ investigate_resid_chordDiagram <- function(fit.list, fit.list2, taxAndFunguild, 
 
   return(p.list)
   
-  #p.list
+  View(res.frame)
+  p.list
   
   # taxAndFunguild %>%
   #   filter(OTUId == select.res$otu2[1])

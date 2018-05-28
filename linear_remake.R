@@ -106,6 +106,7 @@ plot_corFreq_phylo(fit.list = TraitLVs_allXs.cor.df, taxAndFunguild, allXs = TRU
 plot_corFreq_troph(fit.list = TraitLVs_allXs.cor.df, taxAndFunguild, allXs = TRUE) # output/boral_cooccur/corFreq_troph.pdf = Fig 3
 
 
+
 # -------------------------------------------------------------------#
 # rcp_modfit.R : Run mixtures-of-experts models to identify regions of common profiles (RCPs) among OTUs using wood trait measures as covariates
 

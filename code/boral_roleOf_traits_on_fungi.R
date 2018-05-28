@@ -135,8 +135,6 @@ summary_OTUID_nonsignif_Xcoefs <- function(Xcoefs.df, taxAndFunguild){
   
 }
 
-fit.list <- TraitLVs_allXs.Xcoefs.df
-allXs <- TRUE
 plot_summary_Xcoefs_byOTUId <- function(fit.list, taxAndFunguild, allXs){
   
   if(allXs == TRUE){
