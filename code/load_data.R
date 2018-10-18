@@ -67,18 +67,19 @@ load_matotu<-function(){
   # read in OTU table (uclust output) and convert to matrix (rows=samples, columns=OTUs)
   data.otu <- read.csv('data/sequencing_T0/DP16_OTUtable.csv', stringsAsFactors = FALSE)
   mat.otu <- as.matrix(data.otu[, 2:ncol(data.otu)]); rownames(mat.otu) <- data.otu[, 1]
+  # remove extra blank sample
+  mat.otu <- mat.otu[-which(rownames(mat.otu) == 'X..blank'), ]
+  mat.otu <- mat.otu[, colSums(mat.otu) > 0]
   
   sum(colSums(mat.otu)==0) # if 0, then there are no empty columns
   
   # read in dataframe that contains sample information (also used to create meta and xrf)
   data <- read.csv('data/sequencing_T0/NextGenSeqencing_2016_Sample_MasterSpreadsheet.csv', stringsAsFactors=F)
   
-  # extract 'blank' and 'mock' samples from 'mat.otu', delete from 'data'
-  data <- data[!data$SampleCode == 'blank', ]
-  
   # re-label rownames in 'mat.otu' with sample codes
   rownames(mat.otu) <- gsub('.', '-', rownames(mat.otu), fixed=T)
   rownames(mat.otu)[match(data$NextGenID, rownames(mat.otu))] <- data$SampleCode
+  
   
   # extract 'blank' and 'mock' samples from 'mat.otu', delete from 'data'
   blank <- mat.otu[grep('blank', rownames(mat.otu)), ]
@@ -88,16 +89,17 @@ load_matotu<-function(){
   # otus, taxa in mock (select cut-off of >=9 reads in a sample)
   tax <-read.delim('data/sequencing_T0/DP16_tax.txt', stringsAsFactors = F)
   mock <- data.frame(reads=sort(mock[mock > 0]))
-  mock <- cbind(mock, tax[match(rownames(mock), tax$OTU), 'species'])
+  mock <- cbind(mock, tax[match(rownames(mock), tax$qseqid), 'species'])
   #mock
   mat.otu[mat.otu < 9] <- 0
   
   # otus, taxa in blank
   blank <- data.frame(reads=sort(blank[blank > 0]))
-  blank <- cbind(blank, tax[match(rownames(blank), tax$OTU), 'species'])
+  blank <- cbind(blank, tax[match(rownames(blank), tax$qseqid), 'species'])
   #mat.otu[,'ITSall_OTUd_3713'] # the most abundant OTU in the blank does not show up in any of the samples
   
-  # re-order rows in 'mat.otu' to match rows in 'data'
+  # re-order rows in 'mat.otu' to match rows in 'data' after deleting 'blank' from 'data'
+  data <- data[!data$SampleCode == 'blank', ]
   mat.otu <- mat.otu[match(data$SampleCode, rownames(mat.otu)), ]
   all(rownames(mat.otu) == data$SampleCode)  # is TRUE
   
@@ -122,9 +124,20 @@ load_TaxAndFunguild <- function(comm.otu){
   colnames(tax)[1] <- "OTUId" #make this match the column name in funguild
   taxAndFunguild <- left_join(tax, funguild)
   
-  # create a kingdom column
-  taxAndFunguild$kingdom<-NA
-  taxAndFunguild[grepl("Fungi", taxAndFunguild$taxonomy),"kingdom"]<-"Fungi"
+  # delete OTUs from taxAndFunguild if not found in comm.otu (only found in blanks, mock, or very infrequently)
+  # also delete OTUs with suspect coverage (probably nonfungal)
+  # hist(taxAndFunguild$coverage)
+  taxAndFunguild <- filter(taxAndFunguild, OTUId %in% colnames(comm.otu) & coverage > 0.9)
+  # hist(taxAndFunguild$coverage)
+  
+  # delete OTUs from comm.otu not found in taxAndFunguild (probably plant DNA)
+  # hist(rowSums(comm.otu))
+  comm.otu <- comm.otu[, colnames(comm.otu) %in% taxAndFunguild$OTUId]
+  # hist(rowSums(comm.otu))
+  
+  # # create a kingdom column
+  # taxAndFunguild$kingdom<-NA
+  # taxAndFunguild[grepl("Fungi", taxAndFunguild$taxonomy),"kingdom"]<-"Fungi"
   
   # add oomycete OTUs as rows
   #ooOTUs<-colnames(comm.otu)[!colnames(comm.otu) %in% taxAndFunguild$OTUId]
@@ -155,6 +168,12 @@ load_TaxAndFunguild <- function(comm.otu){
   #o.taxAndFunguild[o.taxAndFunguild$kingdom=="Protist", c("taxonomy","phylum","family","genus")]<-"unclassified"
   #o.taxAndFunguild[o.taxAndFunguild$kingdom=="Protist", c("species")]<-"unclassified_Protist"
   
+  #clean taxa
+  o.taxAndFunguild[is.na(o.taxAndFunguild$phylum), 'phylum'] <- 'unclassified'
+  o.taxAndFunguild[is.na(o.taxAndFunguild$family), 'family'] <- 'unclassified'
+  o.taxAndFunguild[is.na(o.taxAndFunguild$genus), 'genus'] <- 'unclassified'
+  o.taxAndFunguild[is.na(o.taxAndFunguild$species), 'species'] <- 'unclassified'
+  
   #clean species
   #species column should have [genus]_sp if the genus is known
   criteria <- o.taxAndFunguild$genus != "unclassified" & o.taxAndFunguild$species == "unclassified"
@@ -166,8 +185,8 @@ load_TaxAndFunguild <- function(comm.otu){
     select(-species) %>%
     rename('species'='species_new') -> o.taxAndFunguild
   
-  #fix weird characters in row 5816
-  o.taxAndFunguild[3508, "species"] <- "Montagnula_aloes"
+  #fix weird characters in 'Montagnula_aloës'
+  o.taxAndFunguild[grep('Montagnula', o.taxAndFunguild$species), "species"] <- "Montagnula_aloes"
   #add numbers to repeated names in species to indicate that they are different OTUs
   o.taxAndFunguild %>%
     filter(grepl("_sp", species)) %>%
@@ -192,6 +211,14 @@ load_TaxAndFunguild <- function(comm.otu){
   
   return(o.taxAndFunguild)
 }
+
+clean_comm<-function(){
+  # delete OTUs from comm.otu not found in taxAndFunguild (probably plant DNA)
+  # hist(rowSums(comm.otu))
+  comm.otu <- comm.otu[, colnames(comm.otu) %in% taxAndFunguild$OTUId]
+  # hist(rowSums(comm.otu))
+}
+
 
 load_stemSamples<-function(){
   

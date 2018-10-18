@@ -37,6 +37,7 @@ source("code/rcp_results.R")
 comm.otu <- load_matotu()
 seqSamples <- load_seqSamples(mat.otu = comm.otu)
 taxAndFunguild <- load_TaxAndFunguild(comm.otu)
+comm.otu <- clean_comm()
 #saveRDS(taxAndFunguild, file = "derived_data/taxAndFunguild.RData") # derived_data/taxAndFunguild.RData
 zanneTree <- load_zanne_tree()
 traits.code <- mergeTraitData()  
