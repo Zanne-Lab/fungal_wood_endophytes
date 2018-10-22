@@ -114,7 +114,7 @@ load_matotu<-function(){
   
 }
 
-load_TaxAndFunguild <- function(comm.otu){
+load_TaxAndFunguild <- function(comm.otu.tmp){
   
   # load fungal OTU info
   funguild <-read.delim('data/sequencing_T0/DP16_funguild.txt', stringsAsFactors = F)
@@ -127,12 +127,12 @@ load_TaxAndFunguild <- function(comm.otu){
   # delete OTUs from taxAndFunguild if not found in comm.otu (only found in blanks, mock, or very infrequently)
   # also delete OTUs with suspect coverage (probably nonfungal)
   # hist(taxAndFunguild$coverage)
-  taxAndFunguild <- filter(taxAndFunguild, OTUId %in% colnames(comm.otu) & coverage > 0.9)
+  taxAndFunguild <- filter(taxAndFunguild, OTUId %in% colnames(comm.otu.tmp) & coverage > 0.9)
   # hist(taxAndFunguild$coverage)
   
   # delete OTUs from comm.otu not found in taxAndFunguild (probably plant DNA)
   # hist(rowSums(comm.otu))
-  comm.otu <- comm.otu[, colnames(comm.otu) %in% taxAndFunguild$OTUId]
+  comm.otu.tmp <- comm.otu.tmp[, colnames(comm.otu.tmp) %in% taxAndFunguild$OTUId]
   # hist(rowSums(comm.otu))
   
   # # create a kingdom column
@@ -145,9 +145,9 @@ load_TaxAndFunguild <- function(comm.otu){
   #taxAndFunguild<-bind_rows(taxAndFunguild, oo.df)
   
   # reorder taxAndFunguild to make OTU table
-  o<-match(colnames(comm.otu), taxAndFunguild$OTUId)
+  o<-match(colnames(comm.otu.tmp), taxAndFunguild$OTUId)
   o.taxAndFunguild<-taxAndFunguild[o,]
-  sum(o.taxAndFunguild$OTUId != colnames(comm.otu)) #this need to be 0
+  sum(o.taxAndFunguild$OTUId != colnames(comm.otu.tmp)) #this need to be 0
   
   # only use FUNGuild info with confidence ranking of Probable or Highly Probable
   o.taxAndFunguild[!o.taxAndFunguild$Confidence.Ranking %in% c("Probable","Highly Probable"),c("Trophic.Mode","Guild")]<-"unclassified"
@@ -212,11 +212,13 @@ load_TaxAndFunguild <- function(comm.otu){
   return(o.taxAndFunguild)
 }
 
-clean_comm<-function(){
+clean_comm<-function(comm.otu.tmp, taxAndFunguild){
   # delete OTUs from comm.otu not found in taxAndFunguild (probably plant DNA)
   # hist(rowSums(comm.otu))
-  comm.otu <- comm.otu[, colnames(comm.otu) %in% taxAndFunguild$OTUId]
+  comm.otu <- comm.otu.tmp[, colnames(comm.otu.tmp) %in% taxAndFunguild$OTUId]
   # hist(rowSums(comm.otu))
+  
+  return(comm.otu)
 }
 
 

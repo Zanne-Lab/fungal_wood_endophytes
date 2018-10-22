@@ -34,10 +34,11 @@ source("code/rcp_results.R")
 
 # -------------------------------------------------------------------#
 # load_data.R and plottingTheme.R : Load data and plotting theme
-comm.otu <- load_matotu()
-seqSamples <- load_seqSamples(mat.otu = comm.otu)
-taxAndFunguild <- load_TaxAndFunguild(comm.otu)
-comm.otu <- clean_comm()
+comm.otu.tmp <- load_matotu()
+seqSamples <- load_seqSamples(mat.otu = comm.otu.tmp)
+taxAndFunguild <- load_TaxAndFunguild(comm.otu = comm.otu.tmp)
+comm.otu <- clean_comm(comm.otu.tmp = comm.otu.tmp, taxAndFunguild = taxAndFunguild)
+
 #saveRDS(taxAndFunguild, file = "derived_data/taxAndFunguild.RData") # derived_data/taxAndFunguild.RData
 zanneTree <- load_zanne_tree()
 traits.code <- mergeTraitData()  
@@ -87,6 +88,7 @@ write_mvabund_aicTable(mod.m.list) # output/roleOfTraits/mvabundAICs.csv = Table
 # TraitsLVs_allXs <- load_boralIntermediates_lvenv(test = test.select, allXs = TRUE)
 # TraitsLVs_selectXs <- load_boralIntermediates_lvenv(test = test.select, allXs = FALSE)
 
+####### MRL hasn't updated the boral output yet ####### 
 # to load minimal output...
 TraitLVs_allXs.Xcoefs.df <- readRDS("derived_data/boralFits/Traits-and-LVs_allXs_allruns_Xcoefsreal.RData")
 TraitLVs_allXs.cor.df <- readRDS("derived_data/boralFits/Traits-and-LVs_allXs_allruns_cordfreal.RData")
@@ -134,6 +136,7 @@ plot_corFreq_troph(fit.list = TraitLVs_allXs.cor.df, taxAndFunguild, allXs = TRU
 # output = derived_data/rcpFits/fromCluster/fm_rcp.RData
 
 # Load the intermediate data into this workflow
+####### MRL hasn't updated the rcp output yet ####### 
 rcp_output_results <- load_rcp_output_results(test = FALSE)
 fm_rcp <- load_fm_rcp(test = FALSE)
 

@@ -49,14 +49,17 @@ targets:
 # -------------------------------------------------------------------#
 # load_data.R and plottingTheme.R : Load data and plotting theme
 
-   comm.otu:
+   comm.otu.tmp:
     command: load_matotu()
     
    seqSamples: 
-    command: load_seqSamples(mat.otu = comm.otu)
+    command: load_seqSamples(mat.otu = comm.otu.tmp)
     
    taxAndFunguild:
-    command: load_TaxAndFunguild(comm.otu)
+    command: load_TaxAndFunguild(comm.otu = comm.otu.tmp)
+    
+   comm.otu:
+    command: clean_comm(comm.otu.tmp = comm.otu.tmp, taxAndFunguild = taxAndFunguild)
     
    zanneTree: 
     command: load_zanne_tree()

@@ -1,9 +1,9 @@
-## JAGS model written for boral version 1.6.1 on 2018-05-17 14:36:43 ##
+## JAGS model written for boral version 1.6.1 on 2018-10-22 16:17:47 ##
 
  model {
 	 ## Data Level ## 
 	 for(i in 1:n) {
-		 for(j in 1:p) { eta[i,j] <- inprod(lv.coefs[j,2:(num.lv+1)],lvs[i,]) + row.coefs.ID1[row.ids[i,1]] + inprod(X.coefs[j,],X[i,]) }
+		 for(j in 1:p) { eta[i,j] <- inprod(lv.coefs[j,2:(num.lv+1)],lvs[i,]) + row.coefs.ID1[row.ids[i,1]] }
 		 for(j in 1:p) { u[i,j] ~ dgamma(1/lv.coefs[j,num.lv+2], 1/lv.coefs[j,num.lv+2]) }
 		 for(j in 1:p) { y[i,j] ~ dpois(exp(lv.coefs[j,1] + eta[i,j ])*(u[i,j])) } ## Parameterizing the NB as a multiplicative random effect models
 
@@ -22,13 +22,6 @@
 	 for(i in 1:num.lv) { lv.coefs[i,i+1] ~ dnorm(0,0.05)I(0,) } ## Sign constraints on diagonal elements
 	 for(i in 2:num.lv) { for(j in 2:i) { lv.coefs[i,j] ~ dnorm(0,0.05) } } ## Free lower diagonals
 	 for(i in (num.lv+1):p) { for(j in 2:(num.lv+1)) { lv.coefs[i,j] ~ dnorm(0,0.05) } } ## All other elements
-
-
-	 for(j in 1:p) { X.coefs[j,1] ~ dnorm(0,0.01) } 
-	 for(j in 1:p) { X.coefs[j,2] ~ dnorm(0,0.01) } 
-	 for(j in 1:p) { X.coefs[j,3] ~ dnorm(0,0.01) } 
-	 for(j in 1:p) { X.coefs[j,4] ~ dnorm(0,0.01) } 
-
 	 for(j in 1:p) { lv.coefs[j,num.lv+2] ~ dunif(0,20) } ## Dispersion parameters
 
 	 }
