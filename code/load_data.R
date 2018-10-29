@@ -127,7 +127,7 @@ load_TaxAndFunguild <- function(comm.otu.tmp){
   
   # apply trophic assignment for 1 genus to all
   GENUS <- unique(taxAndFunguild$genus)
-  i <- 62
+  #i<-62
   for(i in 1:length(GENUS)){
     
     # isolate everything with the same genus
@@ -136,7 +136,12 @@ load_TaxAndFunguild <- function(comm.otu.tmp){
     
     # if it is more than 2 OTUs...
     dim(select.rows)[1] > 1
-    if(dim(select.rows)[1] > 1){
+    select.rows
+    # if there is something in Trophic.Mode
+    criteria <- sum(!is.na(select.rows$Trophic.Mode))
+    criteria > 0
+    
+    if(dim(select.rows)[1] > 1 & criteria > 0){
       
       troph.options <- unique(select.rows$Trophic.Mode)
       troph.options <- troph.options[!is.na(troph.options)]
@@ -148,8 +153,8 @@ load_TaxAndFunguild <- function(comm.otu.tmp){
         taxAndFunguild[criteria, "Trophic.Mode"] <- troph.apply
         
       }else{
-        #print(paste("WARNING", i))
-        #print(troph.options)
+        print(paste("WARNING", i))
+        print(troph.options)
       }
       
     }
