@@ -54,7 +54,7 @@ write_summary_Xcoefs <- function(fit.list, allXs){
   
   # calculate what % of OTUs do not respond significantly to even 1 X var
   num.nr.list <- lapply(Xcoefs.list, notResponsive_OTUs)
-  
+  num.nr.list
 }
 
 summary_OTUID_Xcoefs <- function(Xcoefs.df, taxAndFunguild){
@@ -77,9 +77,15 @@ summary_OTUID_Xcoefs <- function(Xcoefs.df, taxAndFunguild){
            "BT" = "barkthick",
            "WP" = "waterperc",
            "Size" = "sizesmall") -> Xcoef.tab
-
-  #select(OTUId_ann, phylum, genus, Trophic.Mode, sizesmall, density, barkthick, waterperc, C, N, P, Ca, Fe, K, Mn, Zn) %>%
   
+  # density column dropped sometimes, so force it back in if missing
+  test <- sum(colnames(Xcoef.tab) %in% "density")
+  if(test == 0){
+    Xcoef.tab$density <- NA
+    Xcoef.tab %>%
+      select(OTUId_ann, Phylum, Genus, Guild, BT, C, Ca, density, Fe, K, Mn, N, P, Size, WP, Zn) -> Xcoef.tab
+  }
+
   #shorten codes and arrange rows
   # Xcoef.tab$Phylum <- recode(Xcoef.tab$Phylum, 
   #                            "Ascomycota"="A", 
@@ -135,6 +141,7 @@ summary_OTUID_nonsignif_Xcoefs <- function(Xcoefs.df, taxAndFunguild){
   
 }
 
+# signif result must be in 9/12 runs or more
 plot_summary_Xcoefs_byOTUId <- function(fit.list, taxAndFunguild, allXs){
   
   if(allXs == TRUE){
@@ -176,7 +183,7 @@ plot_summary_Xcoefs_byOTUId <- function(fit.list, taxAndFunguild, allXs){
     summarize(numRuns = length(unique(source))) -> all.runs.indx
   Xcoefs.summary.df.l.noflips %>%
     left_join(all.runs.indx) %>%
-    filter(numRuns == 12) -> Xcoefs.summary.df.l.noflips.allruns
+    filter(numRuns >= 9) -> Xcoefs.summary.df.l.noflips.allruns
   
   # order the terms
   df <- Xcoefs.summary.df.l.noflips.allruns
@@ -209,14 +216,12 @@ plot_summary_Xcoefs_byOTUId <- function(fit.list, taxAndFunguild, allXs){
   }
   
   color.vec<- trophic.mode_colors()
-  names(color.vec)[5] <- "Pathotroph-Saprotroph"
- 
   mytheme <- make_ggplot_theme()
   ggplot(summ.df.ann, aes(y = OTUId_ann, x = meanEst, shape = Phylum, color = Guild)) +
     geom_point(size = 3) +
     geom_errorbarh(aes(xmin = meanEst - seEst, xmax = meanEst + seEst)) +
     facet_wrap(~term, scales = "free_x", nrow = 1) +
-    scale_color_manual(name = "Trophic mode", values = color.vec, na.value = "black") +
+    scale_color_manual(name = "Trophic mode", values = color.vec) +
     geom_vline(aes(xintercept = 0), linetype = 2) +
     mytheme + theme(panel.grid.major = element_line("grey70", size = 0.2)) +
     theme(legend.position="top", legend.box = "vertical",

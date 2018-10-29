@@ -122,16 +122,48 @@ load_TaxAndFunguild <- function(comm.otu.tmp){
   
   # merge the dataframes by OTUId
   colnames(tax)[1] <- "OTUId" #make this match the column name in funguild
-  taxAndFunguild <- left_join(tax, funguild)
+  tax %>%
+    left_join(funguild) -> taxAndFunguild
+  
+  # apply trophic assignment for 1 genus to all
+  GENUS <- unique(taxAndFunguild$genus)
+  i <- 62
+  for(i in 1:length(GENUS)){
+    
+    # isolate everything with the same genus
+    criteria <- taxAndFunguild$genus == GENUS[i] & !is.na(taxAndFunguild$genus)
+    select.rows <- taxAndFunguild[criteria,]
+    
+    # if it is more than 2 OTUs...
+    dim(select.rows)[1] > 1
+    if(dim(select.rows)[1] > 1){
+      
+      troph.options <- unique(select.rows$Trophic.Mode)
+      troph.options <- troph.options[!is.na(troph.options)]
+      
+      length(troph.options)
+      if(length(troph.options) == 1){
+        
+        troph.apply <- troph.options
+        taxAndFunguild[criteria, "Trophic.Mode"] <- troph.apply
+        
+      }else{
+        #print(paste("WARNING", i))
+        #print(troph.options)
+      }
+      
+    }
+  }
+
   
   # delete OTUs from taxAndFunguild if not found in comm.otu (only found in blanks, mock, or very infrequently)
   # also delete OTUs with suspect coverage (probably nonfungal)
-  # hist(taxAndFunguild$coverage)
+  #hist(taxAndFunguild$coverage)
   taxAndFunguild <- filter(taxAndFunguild, OTUId %in% colnames(comm.otu.tmp) & coverage > 0.9)
-  # hist(taxAndFunguild$coverage)
+  #hist(taxAndFunguild$coverage)
   
   # delete OTUs from comm.otu not found in taxAndFunguild (probably plant DNA)
-  # hist(rowSums(comm.otu))
+  #hist(rowSums(comm.otu))
   comm.otu.tmp <- comm.otu.tmp[, colnames(comm.otu.tmp) %in% taxAndFunguild$OTUId]
   # hist(rowSums(comm.otu))
   
@@ -150,12 +182,17 @@ load_TaxAndFunguild <- function(comm.otu.tmp){
   sum(o.taxAndFunguild$OTUId != colnames(comm.otu.tmp)) #this need to be 0
   
   # only use FUNGuild info with confidence ranking of Probable or Highly Probable
-  o.taxAndFunguild[!o.taxAndFunguild$Confidence.Ranking %in% c("Probable","Highly Probable"),c("Trophic.Mode","Guild")]<-"unclassified"
+  criteria <- !o.taxAndFunguild$Confidence.Ranking %in% c("Probable","Highly Probable")
+  o.taxAndFunguild[criteria, c("Trophic.Mode","Guild")] <-"unclassified"
   
   # select cols 
   o.taxAndFunguild %>%
     select(OTUId, taxonomy, kingdom, phylum, family, genus, species, 
            Trophic.Mode, Guild) -> o.taxAndFunguild
+  
+  # o.taxAndFunguild %>%
+  #   filter(genus == "unclassified") %>%
+  #   filter(Trophic.Mode != "unclassified")
   
   #clean Trophic.Mode
   #unique(o.taxAndFunguild$Trophic.Mode)
@@ -169,10 +206,16 @@ load_TaxAndFunguild <- function(comm.otu.tmp){
   #o.taxAndFunguild[o.taxAndFunguild$kingdom=="Protist", c("species")]<-"unclassified_Protist"
   
   #clean taxa
+  o.taxAndFunguild %>%
+    filter(is.na(genus)) %>%
+    filter(Trophic.Mode != "unclassified") -> tmp
+  dim(tmp) # what were these matched in FUNGuild?  I'm going to remove the FUNGuild designation
   o.taxAndFunguild[is.na(o.taxAndFunguild$phylum), 'phylum'] <- 'unclassified'
   o.taxAndFunguild[is.na(o.taxAndFunguild$family), 'family'] <- 'unclassified'
   o.taxAndFunguild[is.na(o.taxAndFunguild$genus), 'genus'] <- 'unclassified'
   o.taxAndFunguild[is.na(o.taxAndFunguild$species), 'species'] <- 'unclassified'
+  criteria <- o.taxAndFunguild$genus == "unclassified"
+  o.taxAndFunguild[criteria, c("Trophic.Mode","Guild")] <- "unclassified"
   
   #clean species
   #species column should have [genus]_sp if the genus is known
@@ -187,16 +230,22 @@ load_TaxAndFunguild <- function(comm.otu.tmp){
   
   #fix weird characters in 'Montagnula_aloës'
   o.taxAndFunguild[grep('Montagnula', o.taxAndFunguild$species), "species"] <- "Montagnula_aloes"
+  
   #add numbers to repeated names in species to indicate that they are different OTUs
   o.taxAndFunguild %>%
     filter(grepl("_sp", species)) %>%
     group_by(species) %>%
     summarize(n = length(species)) %>%
     filter(n > 1) -> spfake_indx
+  spfake_indx
+  
   for(i in 1:dim(spfake_indx)[1]){
     curr.sp <- as.character(spfake_indx[i,"species"])
+    curr.sp
     sp.vec <- o.taxAndFunguild[o.taxAndFunguild$species == curr.sp, "species"]
+    sp.vec
     new.sp.vec <- paste(sp.vec, 1:length(sp.vec), sep="")
+    new.sp.vec
     o.taxAndFunguild[o.taxAndFunguild$species == curr.sp, "species"] <- new.sp.vec
   }
   #simplify the OTUId and create an annotated OTUId column using species
@@ -213,6 +262,7 @@ load_TaxAndFunguild <- function(comm.otu.tmp){
 }
 
 clean_comm<-function(comm.otu.tmp, taxAndFunguild){
+  
   # delete OTUs from comm.otu not found in taxAndFunguild (probably plant DNA)
   # hist(rowSums(comm.otu))
   comm.otu <- comm.otu.tmp[, colnames(comm.otu.tmp) %in% taxAndFunguild$OTUId]
@@ -220,7 +270,6 @@ clean_comm<-function(comm.otu.tmp, taxAndFunguild){
   
   return(comm.otu)
 }
-
 
 load_stemSamples<-function(){
   

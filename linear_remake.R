@@ -36,14 +36,26 @@ source("code/rcp_results.R")
 # load_data.R and plottingTheme.R : Load data and plotting theme
 comm.otu.tmp <- load_matotu()
 seqSamples <- load_seqSamples(mat.otu = comm.otu.tmp)
-taxAndFunguild <- load_TaxAndFunguild(comm.otu = comm.otu.tmp)
+taxAndFunguild <- load_TaxAndFunguild(comm.otu.tmp = comm.otu.tmp)
 comm.otu <- clean_comm(comm.otu.tmp = comm.otu.tmp, taxAndFunguild = taxAndFunguild)
+
+# in-text results about the classification of OTUs...
+# dim(taxAndFunguild)
+# taxAndFunguild %>%
+#   filter(genus != "unclassified") -> tmp
+# num.genus.class <- dim(tmp)[1]
+# tmp %>%
+#   filter(Trophic.Mode != "unclassified") -> tmp2
+# num.genus.class.guild<- dim(tmp2)[1]
+# (num.genus.class.guild / num.genus.class) * 100
 
 #saveRDS(taxAndFunguild, file = "derived_data/taxAndFunguild.RData") # derived_data/taxAndFunguild.RData
 zanneTree <- load_zanne_tree()
 traits.code <- mergeTraitData()  
 complete_subset_list <- subset_and_make_list(seqSamples, traits.code, mat.otu = comm.otu)
 save_complete_subset_list(complete_subset_list) # derived_data/complete_subset_list.RData
+#dim(complete_subset_list$otus.trimmed)
+#dim(complete_subset_list$otus)
 
 # -------------------------------------------------------------------#
 # summarize_OTUmat.R : Summarize the OTU matrix
@@ -71,33 +83,67 @@ write_mvabund_aicTable(mod.m.list) # output/roleOfTraits/mvabundAICs.csv = Table
 # -------------------------------------------------------------------#
 # boral_modfit.R : Run model-based constrained and unconstrained ordinations using the boral package
 
-# input data = derived_data/complete_subset_list.RData
-
 # ** For testing **
-# batch_fit_boral() # only uncomment this if the input data changes
-# output = derived_data/boralFits/test/*test.RData
+# batch_fit_boral()
 
 # ** For manuscript **
-# these processes take > 24 hrs and were run separately with cluster computing
-# cluster scripts = ...
-# output = derived_data/boralFits/fromCluster/*real.RData
+# commands associated with boral model fitting take > 24 hrs and were run separately with cluster computing
+# script used for cluster computing: forCluster/clusterScript_woodEndophytes_boral.R
+# output from cluster computing consists of one .RData file for each model fit
+# to reproduce manuscript results...
+# (1) download the zipped output files from this Google Drive link: 
+# (2) place unzipped .RData files in this folder: derived_data/boralFits/fromCluster
+# (3) extract summary data from .RData objects in the "fromCluster" folder to create smaller-sized .RData objects in the "boralFits" folder
+#.... do so by uncommenting this section
+#test.select <- FALSE
+#extract_TraitLVs_allXs.Xcoefs.df(test.select) # makes Traits-and-LVs_allXs_allruns_Xcoefsreal.RData
+#extract_TraitLVs_allXs.cor.df(test.select) # makes Traits-and-LVs_allXs_allruns_cordfreal.RData
+#extract_TraitLVs_selectXs.cor.df(test.select) # makes Traits-and-LVs_selectXs_allruns_cordfreal.RData
+#.... end of section
 
-# to load all output, unzip data above and uncomment the following functions
-# test.select <- FALSE # change to false for testing
-# LVonly <- load_boralIntermediates_lv(test = test.select)
-# TraitsLVs_allXs <- load_boralIntermediates_lvenv(test = test.select, allXs = TRUE)
-# TraitsLVs_selectXs <- load_boralIntermediates_lvenv(test = test.select, allXs = FALSE)
+# you can also examine the mcmc chains, but do not upload this intermediate to GitHub because its too big (>2GB)
+#### careful #### extract_TraitLVs_allXs.mcmc.obj(test.select) 
+#TraitLVs_allXs.mcmc.obj <- readRDS("derived_data/boralFits/Traits-and-LVs_allXs_allruns_mcmcObjreal.RData")
+#geweke.TraitsLVs_allX <- create_geweke_df(fit.list = TraitLVs_allXs.mcmc.obj, complete_subset_list, taxAndFunguild)
+#summarizeGeweke_byParamType(geweke.df.ann = geweke.TraitsLVs_allX, modelLVonly = FALSE, allXs = TRUE) # output/boral_diagnostics/summarizeGeweke_byParamType_Traits-and-LVs.pdf = Fig S2
 
-####### MRL hasn't updated the boral output yet ####### 
-# to load minimal output...
+# (4) load minimal output from cluster computing...
 TraitLVs_allXs.Xcoefs.df <- readRDS("derived_data/boralFits/Traits-and-LVs_allXs_allruns_Xcoefsreal.RData")
 TraitLVs_allXs.cor.df <- readRDS("derived_data/boralFits/Traits-and-LVs_allXs_allruns_cordfreal.RData")
 TraitLVs_selectXs.cor.df <- readRDS("derived_data/boralFits/Traits-and-LVs_selectXs_allruns_cordfreal.RData")
+
+# # in-text results about number of OTU pairs used in analyses...
+# fit.list <- TraitLVs_allXs.cor.df
+# cor.list <- lapply(fit.list, function(x) x$cor.df)
+# cor.df <- list_to_df(cor.list)
+# cor.df.ann <- annotate_cor_withOTUInfo(cor.df = cor.df, taxAndFunguild = taxAndFunguild)
+# cor.df.ann %>%
+#   filter(source == "run10") -> cor.df.ann.curr
+# cor.df.ann.curr %>%
+#   mutate(otupair = paste0(otu1, otu2)) -> cor.df.ann.curr
+# length(unique(cor.df.ann.curr$otupair)) == dim(cor.df.ann.curr)[1] # if TRUE, then each row is a unique OTU pair
+# # total number of OTU pairs
+# totalpairs <- dim(cor.df.ann.curr)[1]
+# totalpairs
+# cor.df.ann.curr %>%
+#   group_by(pair_haveGenusIDs) %>%
+#   summarize(n = length(otupair))
+# # OTU pairs where both OTUs id'd to genus
+# cor.df.ann.curr %>%
+#   group_by(pair_samePhylum) %>%
+#   summarize(n = length(otupair))
+# # OTU pairs where both OTUs id'd to Asco or Basidio
+# cor.df.ann.curr %>%
+#   group_by(pair_sameTroph) %>%
+#   summarize(n = length(otupair))
+# # OTU pairs where both OTUs id'd to Sapro or Patho
+
 
 # -------------------------------------------------------------------#
 # boral_roleOf_traits_on_fungi.R : Summarize the direction and magnitude that wood traits explain OTU abundances
 write_summary_Xcoefs(fit.list = TraitLVs_allXs.Xcoefs.df, allXs = TRUE) # output/boral_roleOfTraits/summary_Xcoefs.csv = Table 2
 plot_summary_Xcoefs_byOTUId(fit.list = TraitLVs_allXs.Xcoefs.df, taxAndFunguild, allXs = TRUE) # output/boral_roleOfTraits/signifXcoefs_byOTUId_allX.pdf = Fig S6
+# note for plot_summary_Xcoefs_byOTUId: OTU coef included if signif in 9 of 12 model runs or more
 
 # -------------------------------------------------------------------#
 # boral_cooccur.R : Summarize the direction and magnitude that OTU environmental and LV predictors covary
@@ -105,38 +151,65 @@ plot_cor_distributions(fit.list = TraitLVs_allXs.cor.df, taxAndFunguild, allXs =
 make_chordDiagrams(fit.list = TraitLVs_allXs.cor.df, taxAndFunguild, allXs = TRUE) # output/boral_cooccur/chordDiagrams.pdf = Fig 2
 plot_cor_distributions(fit.list = TraitLVs_selectXs.cor.df, taxAndFunguild, allXs = FALSE) # output/boral_cooccur/cor_distributions_selectX.pdf = Fig S7
 make_chordDiagrams_table(fit.list = TraitLVs_allXs.cor.df, taxAndFunguild, complete_subset_list, allXs = TRUE) # output/boral_cooccur/chordDiagrams.csv = Table S2
+# note if the following functions are used for new data -- the y axes are fixed
 plot_corFreq_phylo(fit.list = TraitLVs_allXs.cor.df, taxAndFunguild, allXs = TRUE) # output/boral_cooccur/corFreq_phylo.pdf = Fig 3
 plot_corFreq_troph(fit.list = TraitLVs_allXs.cor.df, taxAndFunguild, allXs = TRUE) # output/boral_cooccur/corFreq_troph.pdf = Fig 3
+#plot_cor_distributions_allruns(fit.list = TraitLVs_allXs.cor.df, taxAndFunguild, allXs = TRUE)
 
+# in-text results about consistency of OTU pair correlations across model runs ...
+# enviro.cor.btwRuns(fit.list = TraitLVs_allXs.cor.df, taxAndFunguild, allXs = TRUE) # %
+# residual.cor.btwRuns(fit.list = TraitLVs_allXs.cor.df, taxAndFunguild, allXs = TRUE) # %
 
+# in-text results that highlight notable shared enviro OTU correlations ...
+enviro.out <- investigate_enviro_chordDiagram(fit.list = TraitLVs_allXs.cor.df, 
+                                       fit.list2 = TraitLVs_allXs.Xcoefs.df, 
+                                       taxAndFunguild, allXs = TRUE)
+enviro.out$pair.rank
+enviro.out$pair.info$ITSall_OTUa_5566ITSall_OTUd_35
+taxAndFunguild %>%
+  filter(OTUId == "ITSall_OTUd_35")
+
+# in-text results that highlight notable residual OTU correlations ...
+resid.out <- investigate_resid_chordDiagram(fit.list = TraitLVs_allXs.cor.df, 
+                                            fit.list2 = TraitLVs_allXs.Xcoefs.df, 
+                                            taxAndFunguild, allXs, 
+                                            complete_subset_list, seqSamples, zanneTree)
+resid.out$pair.rank
+resid.out$pair.info[[8]]
+taxAndFunguild %>%
+  filter(OTUId == "ITSall_OTUb_7634")
+
+taxAndFunguild %>%
+  filter(grepl("trabicola", species))
 
 # -------------------------------------------------------------------#
 # rcp_modfit.R : Run mixtures-of-experts models to identify regions of common profiles (RCPs) among OTUs using wood trait measures as covariates
 
 # ** For testing **
-# 1. Run array of nRCPs and summarize stats and save as 'rcp_output_results'
+# (1) Run array of nRCPs and summarize stats and save as 'rcp_output_results'
 # batch_fit_rcp(complete_subset_list = complete_subset_list, 
-#               nRCP.lower = 2, nRCP.upper = 4, nRCP.reps = 1)
-# output = derived_data/rcpFits/rcp_output_results_test.RData
-# 2. Re-run the 'best nRCP choice' and save the full details
+#               nRCP.lower = 2, nRCP.upper = 4, nRCP.reps = 1) # makes derived_data/rcpFits/rcp_output_results_test.RData
+# (2) Re-run the 'best nRCP choice' and save the full details
 # fm_rcp <- fit_rcp(complete_subset_list = complete_subset_list, 
 #                   nRCP = 5)
 # saveRDS(fm_rcp, file = "derived_data/rcpFits/fm_rcp_test.RData")
 
 # ** For manuscript **
-# 1. Run array of nRCPs; these processes take a while and were run separately with cluster computing
-# cluster scripts = ... clusterScript_rcp.R
-# output = derived_data/rcpFits/fromCluster....RData
-# 2. Summarize stats from all .RData objects and save 'rcp_output_results'
-# create_rcp_output_results()
-# output = derived_data/rcpFits/fromCluster/rcp_output_results.RData
+# commands associated with rcp model fitting take > 12 hrs and were run separately with cluster computing
+# script used for cluster computing: forCluster/clusterScript_woodEndophytes_rcp.R
+# to reproduce manuscript results...
+# (1) download the zipped output files from this Google Drive link: 
+# (2) place unzipped .RData files in this folder: derived_data/rcpFits/fromCluster
+# (3) extract summary data from .RData objects in the "fromCluster" folder to create smaller-sized .RData objects in the "boralFits" folder
+#.... do so by uncommenting this section
+#create_rcp_output_results() # makes derived_data/rcpFits/rcp_output_results.RData
+#.... end of section
+# (4) save the .RData object that corresponds to the 'best nRCP choice'
+#.... do so by uncommenting this section
+#rcp_pick(nRCP = 5) # makes derived_data/rcpFits/fm_rcp.RData
+#.... end of section
 
-# 3. Save the .RData object that corresponds to the 'best nRCP choice'
-# rcp_pick(nRCP = 5) 
-# output = derived_data/rcpFits/fromCluster/fm_rcp.RData
-
-# Load the intermediate data into this workflow
-####### MRL hasn't updated the rcp output yet ####### 
+# (5) load minimal output from cluster computing...
 rcp_output_results <- load_rcp_output_results(test = FALSE)
 fm_rcp <- load_fm_rcp(test = FALSE)
 

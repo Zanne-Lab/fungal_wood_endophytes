@@ -480,14 +480,13 @@ plot_mostabundTaxa_perRCP <- function(fm_rcp, taxAndFunguild){
   # rename RCP groups
   mus.df.l$RCP<- recode(mus.df.l$RCP, `RCP1`="Group 1", `RCP2`="Group 2", `RCP3`="Group 3", `RCP4`="Group 4", `RCP5`="Group 5")
   
-  # remove values where expected abundance is below 50 reads
+  # remove values where expected abundance is below 150 reads
   mus.df.l %>%
     filter(expectedAbund > 100) %>%
     mutate(label = ifelse(grepl("OTU", OTUId_ann) == TRUE, "", OTUId_ann)) -> plot.df
   
   # trophic mode colors
   color.vec <- trophic.mode_colors()
-  
   mytheme <- make_ggplot_theme()
   p <- ggplot(plot.df, aes(x = RCP, y = log10(expectedAbund), 
                            shape = phylum, color = Trophic.Mode)) +
@@ -495,13 +494,15 @@ plot_mostabundTaxa_perRCP <- function(fm_rcp, taxAndFunguild){
     geom_text(aes(label = label), hjust = 0, nudge_x = 0.05, size = 2.5) + 
     expand_limits(x = 6) +
     scale_x_discrete(expand = c(0,.2)) +
-    scale_color_manual(name = "Trophic mode", values = color.vec) +
     scale_shape_discrete(name = "Phylum") +
+    scale_color_manual(name = "Trophic mode", values = color.vec) +
     xlab("OTU group") + ylab("Expected OTU abundance (log-transformed)") +
-    mytheme + theme(legend.position="top", legend.box = "vertical", legend.key.height =unit(0,"line")) +
+    mytheme + theme(legend.position="top", legend.box = "vertical", 
+                    legend.key.height =unit(0,"line")) +
     guides(color = guide_legend(order=2),
            shape = guide_legend(order=1))
   p
+  
   
   ggsave(file = "output/rcp_results/expectedAbund_perRCP.pdf", width = 8, height = 8)
   

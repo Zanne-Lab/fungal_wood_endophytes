@@ -288,6 +288,7 @@ residual.cor.btwRuns <- function(fit.list, taxAndFunguild, allXs){
 
 #---------------------------------------------------------#
 # plot distribution of correlation values
+
 plot_cor_distributions_allruns <- function(fit.list, taxAndFunguild, allXs){
   
   if(allXs == TRUE){
@@ -362,8 +363,13 @@ plot_cor_distributions <- function(fit.list, taxAndFunguild, allXs){
   cor.df.ann <- annotate_cor_withOTUInfo(cor.df = cor.df, taxAndFunguild = taxAndFunguild)
   
   #just use the first run's data
-  cor.df.ann %>%
-    filter(source == "run1") -> cor.df.ann
+  if(allXs == TRUE){
+    cor.df.ann %>%
+      filter(source == "run10") -> cor.df.ann
+  }else{
+    cor.df.ann %>%
+      filter(source == "run6") -> cor.df.ann
+  }
   
   #plotting params
   mytheme <- make_ggplot_theme()
@@ -395,8 +401,8 @@ plot_cor_distributions <- function(fit.list, taxAndFunguild, allXs){
     scale_alpha_manual(name = "Genera IDs", values = c(0.5, 1)) +
     xlim(c(-1,1)) +
     mytheme + guides(fill=FALSE, alpha=FALSE) +
-    annotate("text", y=300, x=-0.45, label=paste(percNeg, "%", sep="")) +
-    annotate("text", y=300, x=0.5, label=paste(percPos ,"%", sep=""))
+    annotate("text", y=100, x=-0.6, label=paste(percNeg, "%", sep="")) +
+    annotate("text", y=300, x=0.75, label=paste(percPos ,"%", sep=""))
   p.env
   
   #residual
@@ -441,7 +447,7 @@ write_summary_cor_distribution <- function(fit.list, taxAndFunguild, allXs){
   
   #just use the first run's data
   cor.df.ann %>%
-    filter(source == "run1") %>%
+    filter(source == "run10") %>%
     select(source, otu1, otu2, enviro_cor, residual_cor) %>%
     gather(key = "key",value = "value", -c(source, otu1, otu2)) -> df
 
@@ -453,9 +459,35 @@ write_summary_cor_distribution <- function(fit.list, taxAndFunguild, allXs){
               seval = sd(value)/sqrt(sum(!is.na(value))),
               lowerlim = range(value)[1],
               upperlim = range(value)[2]) -> df.summ
-  
+  df.summ
   fileName <- paste0("output/boral_cooccur/cor_distribution_summarystats_",modelID2,".csv")
   write.csv(df.summ, file=fileName)
+  
+  # #what percent of OTU pairs are not correlated in either enviro or resid (just use first run)
+  # cor.df.ann %>%
+  #   filter(source == "run10") %>%
+  #   select(source, otu1, otu2, enviro_signif, residual_signif) %>%
+  #   filter(enviro_signif == "no" & residual_signif == "no") -> df.tmp
+  # num.notcor <- dim(df.tmp)[1]
+  # totalnum <- dim(cor.df.ann)[1]
+  # (num.notcor / totalnum) *100
+  
+  # #what percent of OTU pairs are not correlated in enviro
+  # cor.df.ann %>%
+  #   filter(source == "run10") %>%
+  #   select(source, otu1, otu2, enviro_signif) %>%
+  #   filter(enviro_signif != "no") -> df.tmp
+  # num.notcor<- dim(df.tmp)[1]
+  # num.notcor/totalnum
+  # 
+  # #what percent of OTU pairs are not correlated in resid
+  # cor.df.ann %>%
+  #   filter(source == "run10") %>%
+  #   select(source, otu1, otu2, residual_signif) %>%
+  #   filter(residual_signif != "no") -> df.tmp
+  # num.notcor<- dim(df.tmp)[1]
+  # num.notcor/totalnum
+  
   
 }
 
@@ -476,9 +508,14 @@ plot_corFreq_phylo <- function(fit.list, taxAndFunguild, allXs){
   
   #just use the first run's data
   cor.df.ann %>%
-    filter(source == "run2") -> cor.df.ann
+    filter(source == "run10") -> cor.df.ann
   
   #summarize frequency of pos, neg, zero correlations by phylo pair
+  cor.df.ann %>%
+    filter(pair_samePhylum != "notAsco-Basidio") -> tmp
+  dim(tmp)[1]
+  dim(cor.df.ann)[1]
+  
   cor.df.ann %>%
     filter(pair_samePhylum != "notAsco-Basidio") %>%
     group_by(pair_samePhylum) %>%
@@ -504,8 +541,8 @@ plot_corFreq_phylo <- function(fit.list, taxAndFunguild, allXs){
   tot <- unique(summ[,c("pair_samePhylum","num_total")])
   tot
   summ$pair_samePhylum <- recode(summ$pair_samePhylum, 
-                                 "no" = "Between (n=2813)",
-                                 "yes" = "Within (n=5062)")
+                                 "no" = "Between (n=440)",
+                                 "yes" = "Within (n=1513)")
   
   #plotting params
   mytheme <- make_ggplot_theme()
@@ -518,6 +555,7 @@ plot_corFreq_phylo <- function(fit.list, taxAndFunguild, allXs){
   p.env <- ggplot(plotdf, aes(x = sign, y = percent, fill = sign, alpha = pair_samePhylum)) +
     geom_bar(stat = "identity", position = "dodge", width = 0.8, col = 1) +
     ylab("Frequency (%)") + xlab("Shared environment\ncorrelation sign") +
+    ylim(c(0,40)) +
     scale_fill_manual(values = colorVec) +
     scale_alpha_manual(name = "Group", values = c(0.5, 1)) +
     mytheme + guides(fill = FALSE)
@@ -528,6 +566,7 @@ plot_corFreq_phylo <- function(fit.list, taxAndFunguild, allXs){
   p.res <- ggplot(plotdf, aes(x = sign, y = percent, fill = sign, alpha = pair_samePhylum)) +
     geom_bar(stat = "identity", position = "dodge", width = 0.8, col = 1) +
     ylab("") + xlab("Residual\ncorrelation sign") +
+    ylim(c(0,40)) +
     scale_fill_manual(values = colorVec) +
     scale_alpha_manual(name = "Group", values = c(0.5, 1)) +
     mytheme + guides(fill = FALSE)
@@ -557,9 +596,12 @@ plot_corFreq_troph <- function(fit.list, taxAndFunguild, allXs){
   
   #just use the first run's data
   cor.df.ann %>%
-    filter(source == "run2") -> cor.df.ann
+    filter(source == "run10") -> cor.df.ann
   
   #summarize frequency of pos, neg, zero correlations by phylo pair
+  cor.df.ann %>%
+    filter(pair_sameTroph != "notPatho-Sapro") -> tmp
+  dim(tmp)
   cor.df.ann %>%
     filter(pair_sameTroph != "notPatho-Sapro") %>%
     group_by(pair_sameTroph) %>%
@@ -585,8 +627,8 @@ plot_corFreq_troph <- function(fit.list, taxAndFunguild, allXs){
   tot <- unique(summ[,c("pair_sameTroph","num_total")])
   tot
   summ$pair_sameTroph <- recode(summ$pair_sameTroph, 
-                                 "no" = "Between (n=221)",
-                                 "yes" = "Within (n=214)")
+                                 "no" = "Between (n=24)",
+                                 "yes" = "Within (n=21)")
   
   #plotting params
   mytheme <- make_ggplot_theme()
@@ -599,6 +641,7 @@ plot_corFreq_troph <- function(fit.list, taxAndFunguild, allXs){
   p.env <- ggplot(plotdf, aes(x = sign, y = percent, fill = sign, alpha = pair_sameTroph)) +
     geom_bar(stat = "identity", position = "dodge", width = 0.8, col = 1) +
     ylab("Frequency (%)") + xlab("Shared environment\ncorrelation sign") +
+    ylim(c(0,40)) +
     scale_fill_manual(values = colorVec) +
     scale_alpha_manual(name = "Group", values = c(0.5, 1)) +
     mytheme + guides(fill = FALSE)
@@ -609,6 +652,7 @@ plot_corFreq_troph <- function(fit.list, taxAndFunguild, allXs){
   p.res <- ggplot(plotdf, aes(x = sign, y = percent, fill = sign, alpha = pair_sameTroph)) +
     geom_bar(stat = "identity", position = "dodge", width = 0.8, col = 1) +
     ylab("") + xlab("Residual\ncorrelation sign") +
+    ylim(c(0,40)) +
     scale_fill_manual(values = colorVec) +
     scale_alpha_manual(name = "Group", values = c(0.5, 1)) +
     mytheme + guides(fill = FALSE)
@@ -772,13 +816,13 @@ investigate_enviro_chordDiagram <- function(fit.list, fit.list2, taxAndFunguild,
     filter(signifLevels %in% c("negative","positive")) -> stable.otupairs
   # make the dataframe
   cor.df.ann %>%
-    filter(source == "run1") %>%
+    filter(source == "run10") %>%
     filter(otupair %in% stable.otupairs$otupair) %>%
     arrange(desc(enviro_cor)) -> env.frame
   
-  # pull out the key OTU pairs
+  # pull out the top 5 and bottom 5 OTU pairs
   lastrow <- dim(env.frame)[1]
-  select.env <- env.frame[c(1:3, lastrow - 2, lastrow - 1, lastrow),]
+  select.env <- env.frame[c(1:5, seq(from = lastrow-4, to = lastrow)),]
   
   # merge with X coefs associated with each
   Xcoefs.list <- lapply(fit.list2, function(x) x$Xcoefs.df)
@@ -798,7 +842,7 @@ investigate_enviro_chordDiagram <- function(fit.list, fit.list2, taxAndFunguild,
     otu2 <- select.env$otu2[i]
     
     Xcoefs.summary.df %>%
-      filter(source == "run1") %>%
+      filter(source == "run10") %>%
       filter(OTUId %in% c(otu1, otu2)) %>%
       select(-source) %>%
       gather(key = "key", value = "value", -c(OTUId)) %>%
@@ -808,23 +852,8 @@ investigate_enviro_chordDiagram <- function(fit.list, fit.list2, taxAndFunguild,
   }
   names(xcoef.sub.list) <- select.env$otupair
   
-  # negative example
-  negExample <- xcoef.sub.list[[3]]
-  taxAndFunguild %>%
-    filter(OTUId %in% c(colnames(negExample)[2:3])) %>%
-    select(OTUId, OTUId_ann) -> names.indx
-  colnames(negExample)[2:3] <- names.indx$OTUId_ann
-  
-  modelID2 <- "allX"
-  fileName <- paste0("output/boral_cooccur/chordDiagrams_enviro_negExamp", modelID2, ".csv")
-  write.csv(negExample, file = fileName)
-  
-  # taxAndFunguild %>%
-  #   filter(OTUId %in% c(colnames(xcoef.sub.list[[3]][2:3]))) %>%
-  #   select(OTUId, OTUId_ann)
-  # xcoef.sub.list[[1]]
-  # xcoef.sub.list[[2]]
-  # xcoef.sub.list[[3]]
+  result <- list(pair.rank = select.env, pair.info = xcoef.sub.list)
+  return(result)
   
 }
 
@@ -863,9 +892,6 @@ compareAbund <- function(otu1, otu2, taxAndFunguild, otu.tab, covariates, seqSam
   
 }
 
-fit.list <- TraitLVs_allXs.cor.df
-fit.list2 <- TraitLVs_allXs.Xcoefs.df
-allXs <- TRUE
 investigate_resid_chordDiagram <- function(fit.list, fit.list2, taxAndFunguild, allXs, complete_subset_list, seqSamples, zanneTree){
   
   # order the Binomial names by the phylo tree
@@ -911,13 +937,13 @@ investigate_resid_chordDiagram <- function(fit.list, fit.list2, taxAndFunguild, 
   
   # make the dataframe
   cor.df.ann %>%
-    filter(source == "run1") %>%
+    filter(source == "run10") %>%
     filter(otupair %in% stable.otupairs$otupair) %>%
     arrange(desc(residual_cor)) -> res.frame
   
-  # pull out the key OTU pairs
+  # pull out the top 5 and bottom 5 OTU pairs
   lastrow <- dim(res.frame)[1]
-  select.res <- res.frame[c(1:3, lastrow - 2, lastrow - 1, lastrow),]
+  select.res <- res.frame[c(1:5, seq(from = lastrow-4, to = lastrow)),]
   
   # pull out their OTU abund across wood species and class sizes and plot
   p.list <- list()
@@ -926,15 +952,10 @@ investigate_resid_chordDiagram <- function(fit.list, fit.list2, taxAndFunguild, 
                                 taxAndFunguild, otu.tab, covariates, seqSamples, b.levels,
                                 corval = select.res$residual_cor[i])
   }
+  
+  result <- list(pair.rank = res.frame, pair.info = p.list)
 
-  return(p.list)
-  
-  View(res.frame)
-  p.list
-  
-  # taxAndFunguild %>%
-  #   filter(OTUId == select.res$otu2[1])
-  
+  return(result)
 }
 
 make_chordDiagrams_table <- function(fit.list, taxAndFunguild, complete_subset_list, allXs = TRUE){
@@ -972,13 +993,12 @@ make_chordDiagrams_table <- function(fit.list, taxAndFunguild, complete_subset_l
   
   # make the plotting dataframe
   cor.df.ann %>%
-    filter(source == "run1") %>%
+    filter(source == "run10") %>%
     filter(otupair %in% stable.otupairs$otupair) %>%
     arrange(desc(enviro_cor)) %>%
     select(otu1, OTUIdann_1, phylum_1, troph_1, otu2, OTUIdann_2, phylum_2, troph_2, enviro_cor) %>%
     rename('corVal'='enviro_cor') %>%
     mutate(corType = "enviro") -> env.frame
-  dim(env.frame)
 
   ########################
   #residual
@@ -996,13 +1016,12 @@ make_chordDiagrams_table <- function(fit.list, taxAndFunguild, complete_subset_l
   
   # make the dataframe
   cor.df.ann %>%
-    filter(source == "run1") %>%
+    filter(source == "run10") %>%
     filter(otupair %in% stable.otupairs$otupair) %>%
     arrange(desc(residual_cor)) %>%
     select(otu1, OTUIdann_1, phylum_1, troph_1, otu2, OTUIdann_2, phylum_2, troph_2, residual_cor) %>%
     rename('corVal'='residual_cor') %>%
     mutate(corType = "residual")-> res.frame
-  dim(res.frame)
   
   
   #########################

@@ -24,12 +24,19 @@ rcp_colors <- function(){
 }
 
 trophic.mode_colors <- function(){
+
+  colorVec <- c("#000000", #black 
+                "#E69F00", #orange
+                "#56B4E9", #blue
+                "#009E73", #green
+                "#5d53e2", #dark blue
+                "#009e73", #teal
+                "#b2009d") #pink
   
-  # The palette with black:
-  # black, orange, lightblue, green, darkblue
-  colorVec <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#0072B2")
-  names(colorVec) <- c("unclassified", "Saprotroph", "Pathotroph","Symbiotroph","Pathotroph-Symbiotroph")
-  
+  names(colorVec) <- c("unclassified", "Saprotroph", "Pathotroph","Symbiotroph",
+                       "Pathotroph-Saprotroph",
+                       "Pathotroph-Saprotroph-Symbiotroph",
+                       "Pathotroph-Symbiotroph")
   return(colorVec)
 }
 
